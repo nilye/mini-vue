@@ -1,0 +1,29 @@
+<html>
+	<head>
+		<script src="vue.js"></script>
+	</head>
+	<body>
+		<input type="number" id="valueInput" value="2">
+		<button id="setValueBtn"> Set Value </button>
+		<script type="module">
+			const { ref, computed } = vue
+
+			const btn = document.getElementById('setValueBtn')
+			const input = document.getElementById('valueInput')
+
+			let valueRef = ref(0)
+			let computedVal = computed(() => {
+				console.log('start computing')
+				return valueRef.value ** 2
+			})
+			console.log(valueRef, computedVal)
+
+			btn.onclick = function (){
+				valueRef.value = Number(input.value)
+				// console.log(computedVal.value)
+			}
+
+
+		</script>
+	</body>
+</html>

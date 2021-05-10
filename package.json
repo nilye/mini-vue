@@ -1,0 +1,15 @@
+{
+  "name": "mini-vue",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "dev": "rollup"
+  },
+  "devDependencies": {
+    "rollup": "^2.46.0",
+    "rollup-plugin-typescript2": "^0.30.0",
+    "tslib": "^2.2.0",
+    "typescript": "^4.2.4"
+  }
+}
