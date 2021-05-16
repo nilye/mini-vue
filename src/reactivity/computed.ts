@@ -1,5 +1,4 @@
 import { effect, ReactiveEffect, track, trigger } from "./effect";
-import { TriggerOpType } from "./operation";
 
 class ComputedRefImpl<T> {
 	private _value: T
@@ -7,16 +6,13 @@ class ComputedRefImpl<T> {
 
 	public readonly effect: ReactiveEffect<T>
 
-	constructor(
-		getter: () => T,
-		private readonly _setter: (newValue: any) => unknown = () => void 0,
-	){
-		this.effect = effect(getter, {
+	constructor(fn){
+		this.effect = effect(fn, {
 			lazy: true,
 			scheduler: () => {
 				if (!this._dirty){
 					this._dirty = true
-					trigger(this, TriggerOpType.SET, 'value')
+					trigger(this, 'value')
 				}
 			}
 		})
@@ -31,28 +27,8 @@ class ComputedRefImpl<T> {
 		return this._value
 	}
 
-	set value (newValue){
-		this._setter(newValue)
-	}
-
 }
 
-export function computed(
-	getterOrOptions: any
-){
-	let getter
-	let setter
-
-	if (typeof getterOrOptions === 'function'){
-		getter = getterOrOptions
-		setter = () => void 0
-	} else {
-		getter = getterOrOptions.get
-		setter = getterOrOptions.set
-	}
-
-	return new ComputedRefImpl(
-		getter,
-		setter
-	)
+export function computed(fn: any){
+	return new ComputedRefImpl(fn)
 }

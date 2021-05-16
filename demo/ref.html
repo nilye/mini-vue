@@ -1,27 +1,83 @@
 <html>
 	<head>
-		<script src="vue.js"></script>
+		<script src="../dist/vue.js"></script>
+		<style>
+			.red{ color: red}
+			.blue{ color: blue}
+		</style>
 	</head>
 	<body>
-		<input type="number" id="valueInput" value="2">
-		<button id="setValueBtn"> Set Value </button>
+		<div id="app"></div>
 		<script type="module">
-			const { ref, computed } = vue
 
-			const btn = document.getElementById('setValueBtn')
-			const input = document.getElementById('valueInput')
+			const { createApp, h, getCurrentInstance, onMounted, reactive, computed, watch, watchEffect } = vue
 
-			let valueRef = ref(0)
-			let computedVal = computed(() => {
-				console.log('start computing')
-				return valueRef.value ** 2
-			})
-			console.log(valueRef, computedVal)
-
-			btn.onclick = function (){
-				valueRef.value = Number(input.value)
-				// console.log(computedVal.value)
+			const NBtn = {
+				name: 'n-btn',
+				props: ['size', 'text'],
+				setup({ props, emit }){
+					return () => h('button', {
+						style: `font-size: ${props.size}px`,
+						onClick: (e) => emit('click', e)
+					}, props.text)
+				}
 			}
+
+			const AppComponent = {
+				setup(){
+
+					const state = reactive({
+						count: 12,
+						color: null
+					})
+
+					const instance = getCurrentInstance()
+					onMounted(() => {
+						console.log(instance, instance.el, state)
+					})
+
+					return () => h('div', {
+						class: 'main ' + state.color
+					}, [
+						h(NBtn, {
+							text: 'ADD',
+							onClick: (e) => {
+								state.count++
+							}
+						}),
+						h(NBtn, {
+							text: 'MINUS',
+							onClick: (e) => {
+								state.count--
+							}
+						}),
+						h(NBtn, {
+							text: 'RED',
+							onClick: (e) => {
+								state.color = 'red'
+							}
+						}),
+						h(NBtn, {
+							text: 'BLUE',
+							onClick: (e) => {
+								state.color = 'blue'
+							}
+						}),
+						h('p', {
+							style: `font-size: ${state.count}px`
+						}, String(state.count)),
+						h('ul', {},
+							Object.keys(Array(state.count).fill(null)).map(n => {
+								return h('li', {}, n)
+							})
+						)
+					])
+				}
+
+			}
+
+			const app = createApp(AppComponent)
+			app.mount(document.querySelector('#app'))
 
 
 		</script>

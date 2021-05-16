@@ -1,13 +1,11 @@
-import { TriggerOpType } from "./operation";
-
 type Dep = Set<Function>
 const targetMap = new WeakMap<any, Map<any, Dep>>()
 
 let activeEffect
-const effectStack: ReactiveEffect[] = []
 
 export interface ReactiveEffect<T = any> {
 	(): T,
+
 	_isEffect: boolean,
 	active: boolean,
 	raw: () => T,
@@ -17,19 +15,12 @@ export interface ReactiveEffect<T = any> {
 	}
 }
 
-export function isEffect(fn: any): fn is ReactiveEffect{
-	return fn && fn._isEffect === true
-}
-
 export function effect<T = any>(
 	fn: () => T,
 	options: any = {}
-){
-	if (isEffect(fn)){
-		fn = fn.raw
-	}
+) {
 	const effect = createReactiveEffect(fn, options)
-	if (!options.lazy){
+	if (!options.lazy) {
 		effect()
 	}
 	return effect
@@ -38,20 +29,13 @@ export function effect<T = any>(
 function createReactiveEffect<T>(
 	fn: () => T,
 	options: any
-){
-	const effect = function (){
-		if (!effect.active){
-			return options.scheduler ? undefined : fn()
-		}
-		if (!effectStack.includes(effect)){
-			try {
-				effectStack.push(effect)
-				activeEffect = effect
-				return fn()
-			} finally {
-				effectStack.pop()
-				activeEffect = effectStack[effectStack.length - 1]
-			}
+) {
+	const effect = function () {
+		try {
+			activeEffect = effect
+			return fn()
+		} finally {
+			activeEffect = null
 		}
 	}
 	effect._isEffect = true
@@ -64,66 +48,46 @@ function createReactiveEffect<T>(
 
 export function track(
 	target: object,
-	key: string
-){
+	key: string | number | symbol
+) {
 	let depsMap = targetMap.get(target)
-	if (!depsMap){
+	if (!depsMap) {
 		targetMap.set(target, (depsMap = new Map()))
 	}
 
 	let dep = depsMap.get(key)
-	if (!dep){
+	if (!dep) {
 		depsMap.set(key, (dep = new Set()))
 	}
-	if (!dep.has(activeEffect)){
+	if (!dep.has(activeEffect)) {
 		dep.add(activeEffect)
-		// activeEffect.deps.push(dep)
 	}
 }
 
 export function trigger(
 	target: object,
-	type: TriggerOpType,
-	key: unknown,
-	newValue?: unknown,
-	oldValue?: unknown
-){
+	key: string | number | symbol,
+) {
 	const depsMap = targetMap.get(target)
 	if (!depsMap) return
 
 	const effects = new Set()
 	const addEffects = (effectsToAdd) => {
-		if (effectsToAdd){
+		if (effectsToAdd) {
 			effectsToAdd.forEach(effect => {
-				if (effect !== activeEffect){
+				if (effect !== activeEffect) {
 					effects.add(effect)
 				}
 			})
 		}
 	}
 
-	if (key != null){
+	if (key != null) {
 		addEffects(depsMap.get(key))
 	}
 
-	switch (type){
-		case TriggerOpType.ADD:
-			if (Array.isArray(target) && typeof key === 'number'){
-				addEffects(depsMap.get('length'))
-			}
-			break
-		case TriggerOpType.DELETE:
-			if (Array.isArray(target)){
-				addEffects(depsMap.get('length'))
-			}
-			break
-		case TriggerOpType.SET:
-			//
-			break
-	}
-
 	const run = (effect) => {
-		if (effect.options.scheduler){
+		if (effect.options.scheduler) {
 			effect.options.scheduler()
 		} else {
 			effect()
